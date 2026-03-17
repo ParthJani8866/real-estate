@@ -1,41 +1,73 @@
-import Link from 'next/link'
-import React from 'react'
+"use client";
 
-const Header: React.FC = () => {
+import Link from "next/link";
+import { useState, useEffect } from "react";
+
+export default function Header() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) setUser(true); // later decode JWT for real user
+  }, []);
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    window.location.reload();
+  };
+
   return (
-    <header className="w-full bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+    <header className="bg-white dark:bg-black shadow">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="bg-blue-600 text-white px-3 py-1 rounded-lg font-bold text-lg">
-            DH
-          </div>
-          <span className="text-xl font-semibold text-gray-800">
-            DreamHouse4Sale
-          </span>
+        <Link href="/" className="text-xl font-bold text-blue-600">
+          DreamHouse4Sale
         </Link>
 
         {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 text-gray-700 font-medium">
+        <nav className="hidden md:flex gap-6 text-gray-700 dark:text-gray-300">
           <Link href="/">Home</Link>
           <Link href="/properties">Properties</Link>
           <Link href="/reels">Reels</Link>
           <Link href="/contact">Contact</Link>
         </nav>
 
-        {/* CTA */}
-        <div className="hidden md:block">
-          <Link href="/post-property">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
-              Post Property
-            </button>
-          </Link>
+        {/* Auth Buttons */}
+        <div className="flex gap-3">
+          {user ? (
+            <>
+              <Link
+                href="/admin"
+                className="bg-gray-200 px-4 py-2 rounded-lg"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={logout}
+                className="bg-red-500 text-white px-4 py-2 rounded-lg"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="border px-4 py-2 rounded-lg"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+              >
+                Signup
+              </Link>
+            </>
+          )}
         </div>
-
       </div>
     </header>
-  )
+  );
 }
-
-export default Header
