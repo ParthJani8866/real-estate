@@ -30,7 +30,9 @@ export default function AdminDashboard() {
       headers: { Authorization: `Bearer ${token}` }
     })
     const data = await res.json()
-    setProperties(data)
+    console.log(data);
+    
+    setProperties(Array.isArray(data) ? data : data.properties || []);
   }
 
   const fetchUsers = async () => {
@@ -38,7 +40,7 @@ export default function AdminDashboard() {
       headers: { Authorization: `Bearer ${token}` }
     })
     const data = await res.json()
-    setUsers(data)
+    setUsers(Array.isArray(data) ? data : data.users || [])
   }
 
   const deleteProperty = async (id: string) => {
