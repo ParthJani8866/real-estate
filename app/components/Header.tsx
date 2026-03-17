@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 
@@ -19,10 +20,16 @@ export default function Header() {
   return (
     <header className="bg-white dark:bg-black shadow">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        
+
         {/* Logo */}
-        <Link href="/" className="text-xl font-bold text-blue-600">
-          DreamHouse4Sale
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="DreamHouse4Sale"
+            width={160}
+            height={40}
+            priority
+          />
         </Link>
 
         {/* Navigation */}
