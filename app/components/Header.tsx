@@ -25,10 +25,7 @@ export default function Header() {
 
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/logo.png" alt="logo" width={40} height={40} />
-          <span className="text-lg font-bold text-blue-600">
-            DreamHouse4Sale
-          </span>
+          <Image src="/logo.png" alt="logo" width={160} height={80} />
         </Link>
 
         {/* Desktop Nav */}

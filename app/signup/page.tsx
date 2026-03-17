@@ -10,12 +10,18 @@ export default function Signup() {
   const handleSignup = async () => {
     const res = await fetch("/api/auth/signup", {
       method: "POST",
-      body: JSON.stringify({ name, email, password }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+      }),
     });
 
     const data = await res.json();
-
-    if (data.message === "User created") {
+    if (data.message === "User created successfully") {
       window.location.href = "/login";
     } else {
       alert("Signup failed");
