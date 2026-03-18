@@ -134,10 +134,10 @@ export default function PropertyDetailClient({ property }: { property: Property 
   const agent = {
     name: "Parth Jani",
     phone: "8866398281",
-    email: "parth.jani@example.com",
-    rating: 4.9,
+    email: "parthskyward@gmail.com",
+    rating: 4.7,
     reviews: 127,
-    image: "/agent-placeholder.jpg", // Add a placeholder image
+    image: "/agent-placeholder.jpg",
   };
 
   const nextImage = () => {
