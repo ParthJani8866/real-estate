@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Link from 'next/link'
+import { Building2, MapPin } from 'lucide-react';
 
 interface Property {
   _id: string
@@ -46,6 +47,11 @@ export default function Home() {
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [submittedSearch, setSubmittedSearch] = useState('')
+
+  // Autocomplete suggestions
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
 
   // Fetch cities and areas
   useEffect(() => {
@@ -67,7 +73,7 @@ export default function Home() {
     fetchFilters()
   }, [])
 
-  // Fetch properties based on filters
+  // Fetch properties based on filters and search
   useEffect(() => {
     const fetchProperties = async () => {
       setLoading(true)
@@ -80,6 +86,7 @@ export default function Home() {
         if (selectedBhk) params.append('bhk', selectedBhk)
         if (minPrice) params.append('minPrice', minPrice)
         if (maxPrice) params.append('maxPrice', maxPrice)
+        if (submittedSearch) params.append('search', submittedSearch)
 
         const url = `/api/properties?${params.toString()}`
 
@@ -97,7 +104,40 @@ export default function Home() {
     }
 
     fetchProperties()
-  }, [selectedPurpose, selectedCity, selectedArea, selectedBhk, minPrice, maxPrice])
+  }, [selectedPurpose, selectedCity, selectedArea, selectedBhk, minPrice, maxPrice, submittedSearch])
+
+  // Build unique location names for autocomplete
+  const allLocationNames = [
+    ...cities.map(c => c.name),
+    ...areas.map(a => a.name)
+  ].filter((value, index, self) => self.indexOf(value) === index) // unique
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchQuery(value)
+    if (value.length > 0) {
+      const matches = allLocationNames
+        .filter(name => name.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 5) // show max 5 suggestions
+      setSuggestions(matches)
+      setShowSuggestions(true)
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchQuery(suggestion)
+    setSuggestions([])
+    setShowSuggestions(false)
+    setSubmittedSearch(suggestion) // trigger search with selected suggestion
+  }
+
+  const handleSearch = () => {
+    setSubmittedSearch(searchQuery)
+    setShowSuggestions(false)
+  }
 
   const filteredAreas = areas.filter(area => area.cityId === selectedCity)
 
@@ -119,7 +159,6 @@ export default function Home() {
     if (property.cityId && typeof property.cityId === 'object' && property.cityId.name) {
       location = location ? `${property.cityId.name}, ${location}` : property.cityId.name
     } else if (typeof property.cityId === 'string') {
-      // If cityId is string, find city name from cities array
       const city = cities.find(c => c._id === property.cityId)
       if (city) location = city.name
     }
@@ -134,7 +173,6 @@ export default function Home() {
 
         {/* HERO SECTION */}
         <section className="relative py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          {/* ... (same as before) ... */}
           <div className="max-w-6xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold leading-tight">
               Find Your Dream Home in Ahmedabad
@@ -144,14 +182,37 @@ export default function Home() {
             </p>
 
             <div className="mt-8 bg-white rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
-              <input
-                type="text"
-                placeholder="Search by area, city, project..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-lg text-black outline-none"
-              />
-              <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder="Search by area, city, project..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  className="w-full px-4 py-3 rounded-lg text-black outline-none"
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {suggestions.map((item, idx) => (
+                      <li
+                        key={idx}
+                        onMouseDown={() => handleSuggestionClick(item)}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-800 flex items-center gap-2"
+                      >
+
+                        <Building2 size={16} className="text-blue-500" />
+                       
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button
+                onClick={handleSearch}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
+              >
                 Search
               </button>
             </div>
@@ -173,74 +234,127 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FILTER SECTION */}
-        <section className="max-w-7xl mx-auto px-6 py-8">
-          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Filter Properties</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              <select
-                value={selectedPurpose}
-                onChange={(e) => setSelectedPurpose(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              >
-                <option value="">Purpose</option>
-                <option value="sell">Sell</option>
-                <option value="rent">Rent</option>
-                <option value="pg">PG</option>
-              </select>
-
-              <select
-                value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value)
-                  setSelectedArea('')
+        {/* FILTER SECTION – hidden on mobile */}
+        <section className="hidden md:block max-w-7xl mx-auto px-6 py-8">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-lg p-8">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Filter Properties</h2>
+              <button
+                onClick={() => {
+                  setSelectedPurpose('');
+                  setSelectedCity('');
+                  setSelectedArea('');
+                  setSelectedBhk('');
+                  setMinPrice('');
+                  setMaxPrice('');
+                  setSearchQuery('');
+                  setSubmittedSearch('');
                 }}
-                className="border rounded-lg px-3 py-2"
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
               >
-                <option value="">City</option>
-                {cities.map(city => (
-                  <option key={city._id} value={city._id}>{city.name}</option>
-                ))}
-              </select>
+                Clear all filters
+              </button>
+            </div>
 
-              <select
-                value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
-                disabled={!selectedCity}
-                className="border rounded-lg px-3 py-2 disabled:opacity-50"
-              >
-                <option value="">Area</option>
-                {filteredAreas.map(area => (
-                  <option key={area._id} value={area._id}>{area.name}</option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              {/* Purpose */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Purpose
+                </label>
+                <select
+                  value={selectedPurpose}
+                  onChange={(e) => setSelectedPurpose(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All</option>
+                  <option value="sell">For Sale</option>
+                  <option value="rent">For Rent</option>
+                  <option value="pg">PG</option>
+                </select>
+              </div>
 
-              <select
-                value={selectedBhk}
-                onChange={(e) => setSelectedBhk(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              >
-                <option value="">BHK</option>
-                {[1,2,3,4,5].map(num => (
-                  <option key={num} value={num}>{num} BHK</option>
-                ))}
-              </select>
+              {/* City */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  City
+                </label>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => {
+                    setSelectedCity(e.target.value);
+                    setSelectedArea('');
+                  }}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Cities</option>
+                  {cities.map(city => (
+                    <option key={city._id} value={city._id}>{city.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                type="number"
-                placeholder="Min Price (₹)"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              />
+              {/* Area */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Area
+                </label>
+                <select
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                  disabled={!selectedCity}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">All Areas</option>
+                  {filteredAreas.map(area => (
+                    <option key={area._id} value={area._id}>{area.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              <input
-                type="number"
-                placeholder="Max Price (₹)"
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              />
+              {/* BHK */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  BHK
+                </label>
+                <select
+                  value={selectedBhk}
+                  onChange={(e) => setSelectedBhk(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Any</option>
+                  {[1, 2, 3, 4, 5].map(num => (
+                    <option key={num} value={num}>{num} BHK</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Price Range */}
+              <div className="lg:col-span-2 xl:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Min Price (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="lg:col-span-2 xl:col-span-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Max Price (₹)
+                </label>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
         </section>
@@ -273,8 +387,8 @@ export default function Home() {
                   >
                     <div className="h-48 bg-gray-300 relative">
                       {property.images && property.images.length > 0 ? (
-                        <img 
-                          src={property.images[0]} 
+                        <img
+                          src={property.images[0]}
                           alt={property.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {

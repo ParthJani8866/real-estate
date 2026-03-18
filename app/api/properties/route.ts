@@ -6,7 +6,7 @@ import Property from "../../models/Property";
 export async function GET(request: Request) {
   try {
     await connectDB();
-    
+
     const { searchParams } = new URL(request.url);
     const purpose = searchParams.get('purpose');
     const city = searchParams.get('city');
@@ -14,6 +14,7 @@ export async function GET(request: Request) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const bhk = searchParams.get('bhk');
+    const search = searchParams.get('search'); // new
 
     const filter: any = {};
     if (purpose) filter.purpose = purpose;
@@ -24,6 +25,10 @@ export async function GET(request: Request) {
       filter.price = {};
       if (minPrice) filter.price.$gte = parseInt(minPrice);
       if (maxPrice) filter.price.$lte = parseInt(maxPrice);
+    }
+    if (search) {
+      // Simple case‑insensitive search on title (add more fields as needed)
+      filter.title = { $regex: search, $options: 'i' };
     }
 
     const properties = await Property.find(filter)

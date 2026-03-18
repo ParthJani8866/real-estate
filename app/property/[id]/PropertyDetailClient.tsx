@@ -32,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import Header from "@/app/components/Header";
+import Footer from "@/app/components/Footer";
 
 interface Property {
   _id: string;
@@ -102,7 +103,7 @@ export default function PropertyDetailClient({ property }: { property: Property 
 
   const getLocationText = () => {
     const parts = [];
-    
+
     if (property.areaId && typeof property.areaId === "object") parts.push(property.areaId.name);
     if (property.cityId && typeof property.cityId === "object") parts.push(property.cityId.name);
     return parts.join(", ") || "Location not specified";
@@ -157,9 +158,8 @@ export default function PropertyDetailClient({ property }: { property: Property 
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                    selectedImage === idx ? "border-blue-600" : "border-transparent"
-                  }`}
+                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImage === idx ? "border-blue-600" : "border-transparent"
+                    }`}
                 >
                   <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                 </button>
@@ -410,7 +410,9 @@ export default function PropertyDetailClient({ property }: { property: Property 
             </div>
           </div>
         </div>
+
       )}
+      <Footer></Footer>
     </div>
   );
 }
