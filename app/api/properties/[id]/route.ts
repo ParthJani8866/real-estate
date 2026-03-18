@@ -9,28 +9,21 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    console.log("🔍 API received ID:", id);
-    console.log("📏 ID length:", id.length);
-    console.log("🔢 Is valid ObjectId?", mongoose.Types.ObjectId.isValid(id));
 
     await connectDB();
-    console.log("✅ Database connected");
 
     // Try findById
     let property = await Property.findById(id).lean();
-    console.log("📦 findById result:", property ? "Found" : "Not found");
 
     // If not found, try with explicit ObjectId
     if (!property && mongoose.Types.ObjectId.isValid(id)) {
       const objectId = new mongoose.Types.ObjectId(id);
       property = await Property.findOne({ _id: objectId }).lean();
-      console.log("🔁 findOne with ObjectId result:", property ? "Found" : "Not found");
     }
 
     // If still not found, try as string (in case _id is stored as string)
     if (!property) {
       property = await Property.findOne({ _id: id }).lean();
-      console.log("🔁 findOne with string result:", property ? "Found" : "Not found");
     }
 
     if (!property) {

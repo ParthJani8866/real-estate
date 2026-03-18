@@ -7,12 +7,10 @@ const Area = require('../models/Area')
 async function seedDatabase() {
   try {
     await mongoose.connect(process.env.MONGODB_URI)
-    console.log('✅ Connected to MongoDB')
 
     // Clear existing data (optional - remove if you want to keep existing data)
     await City.deleteMany({})
     await Area.deleteMany({})
-    console.log('🗑️ Cleared existing cities and areas')
 
     // Cities data with valid ObjectIds
     const cities = [
@@ -24,7 +22,6 @@ async function seedDatabase() {
 
     // Insert cities
     const insertedCities = await City.insertMany(cities)
-    console.log(`✅ Inserted ${insertedCities.length} cities`)
 
     // Areas data with valid ObjectIds (generating new ObjectIds for each area)
     const areas = [
@@ -39,33 +36,15 @@ async function seedDatabase() {
 
     // Insert areas
     const insertedAreas = await Area.insertMany(areas)
-    console.log(`✅ Inserted ${insertedAreas.length} areas`)
 
     // Verify the data
     const cityCount = await City.countDocuments()
     const areaCount = await Area.countDocuments()
     
-    console.log('\n📊 Database Summary:')
-    console.log(`Total Cities: ${cityCount}`)
-    console.log(`Total Areas: ${areaCount}`)
-
     // Show sample data
     const sampleCity = await City.findOne()
     const sampleArea = await Area.findOne().populate('cityId')
     
-    console.log('\n📝 Sample City:', {
-      id: sampleCity._id.toString(),
-      name: sampleCity.name,
-      state: sampleCity.state
-    })
-    
-    console.log('📝 Sample Area:', {
-      id: sampleArea._id.toString(),
-      name: sampleArea.name,
-      city: sampleArea.cityId?.name,
-      pincode: sampleArea.pincode
-    })
-
   } catch (error) {
     console.error('❌ Error seeding database:', error)
   } finally {

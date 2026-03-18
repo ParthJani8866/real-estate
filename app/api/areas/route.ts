@@ -11,16 +11,10 @@ export async function GET() {
     console.log('Fetching areas...');
     const areas = await Area.find().lean();
     
-    console.log(`Found ${areas.length} areas`);
     
     // Transform each area to ensure cityId is a string
     const transformedAreas = areas.map(area => {
-      console.log('Raw area:', {
-        _id: area._id,
-        name: area.name,
-        cityId: area.cityId,
-        pincode: area.pincode
-      });
+    
       
       return {
         _id: area._id.toString(),
@@ -30,7 +24,6 @@ export async function GET() {
       };
     });
     
-    console.log('Transformed areas:', transformedAreas);
     
     return NextResponse.json(transformedAreas);
     
@@ -48,7 +41,6 @@ export async function POST(req: Request) {
     await connectDB();
     const body = await req.json();
     
-    console.log('Creating area with body:', body);
     
     const area = await Area.create(body);
     

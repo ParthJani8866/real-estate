@@ -82,12 +82,10 @@ export default function Home() {
         if (maxPrice) params.append('maxPrice', maxPrice)
 
         const url = `/api/properties?${params.toString()}`
-        console.log('Fetching properties from:', url) // Debug log
 
         const res = await fetch(url)
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
         const data = await res.json()
-        console.log('Properties received:', data.properties?.length || 0) // Debug log
 
         setProperties(data.properties || [])
       } catch (error) {

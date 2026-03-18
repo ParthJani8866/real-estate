@@ -218,27 +218,20 @@ export default function AdminDashboard() {
 
   const fetchCities = async () => {
     try {
-      console.log('Fetching cities...')
       const res = await fetch('/api/cities', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      console.log('Cities response status:', res.status)
 
       if (!res.ok) throw new Error('Failed to fetch cities')
 
       const data = await res.json()
-      console.log('Cities data received:', data)
-      console.log('Cities array:', data.cities)
 
       // Check the structure of the response
       if (data.cities && Array.isArray(data.cities)) {
-        console.log('Setting cities with:', data.cities.length, 'items')
         setCities(data.cities)
       } else if (Array.isArray(data)) {
-        console.log('Data is directly an array:', data.length, 'items')
         setCities(data)
       } else {
-        console.error('Unexpected cities data format:', data)
       }
     } catch (error) {
       console.error('Error fetching cities:', error)
@@ -247,53 +240,42 @@ export default function AdminDashboard() {
 
   const fetchAreas = async () => {
     try {
-      console.log('Fetching areas...')
       const res = await fetch('/api/areas', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      console.log('Areas response status:', res.status)
 
       if (!res.ok) throw new Error('Failed to fetch areas')
 
       const data = await res.json()
-      console.log('Areas data received:', data)
-      console.log('Areas array:', data.areas)
 
       // Check the structure of the response
       if (data.areas && Array.isArray(data.areas)) {
-        console.log('Setting areas with:', data.areas.length, 'items')
         setAreas(data.areas)
       } else if (Array.isArray(data)) {
-        console.log('Data is directly an array:', data.length, 'items')
         setAreas(data)
       } else {
-        console.error('Unexpected areas data format:', data)
       }
     } catch (error) {
       console.error('Error fetching areas:', error)
     }
   }
   useEffect(() => {
-    console.log('Cities state updated:', cities)
-    console.log('Cities count:', cities.length)
+    
     if (cities.length > 0) {
       console.log('First city:', cities[0])
     }
   }, [cities])
 
   useEffect(() => {
-    console.log('Areas state updated:', areas)
-    console.log('Areas count:', areas.length)
+   
     if (areas.length > 0) {
       console.log('First area:', areas[0])
     }
   }, [areas])
 
   useEffect(() => {
-    console.log('Form cityId changed:', form.cityId)
     if (form.cityId) {
       const filtered = areas.filter(a => a.cityId === form.cityId)
-      console.log('Filtered areas for this city:', filtered)
     }
   }, [form.cityId, areas])
   const fetchProperties = async () => {

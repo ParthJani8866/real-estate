@@ -12,12 +12,7 @@ export async function POST(req: Request) {
   const { email, password } = await req.json();
 
   const normalizedEmail = email.toLowerCase().trim()
-  console.log('Normalized email:', normalizedEmail)
-
   const user = await User.findOne({ email: normalizedEmail });
-
-  console.log(user);
-
   if (!user) {
     return NextResponse.json(
       { message: "Invalid email or password" },
