@@ -410,6 +410,24 @@ export default function AdminDashboard() {
     setUploadedImages(prev => prev.filter((_, i) => i !== index))
   }
 
+  // --- New functions for image reordering ---
+  const moveImageUp = (index: number) => {
+    if (index === 0) return; // already first
+    const newImages = [...form.images];
+    [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+    setForm({ ...form, images: newImages });
+    setUploadedImages(newImages);
+  };
+
+  const moveImageDown = (index: number) => {
+    if (index === form.images.length - 1) return; // already last
+    const newImages = [...form.images];
+    [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+    setForm({ ...form, images: newImages });
+    setUploadedImages(newImages);
+  };
+  // -----------------------------------------
+
   const createProperty = async () => {
     setIsSubmitting(true)
     setError(null)
@@ -1066,18 +1084,46 @@ export default function AdminDashboard() {
                       <h4 className="font-medium mb-3">Uploaded Photos ({form.images.length})</h4>
                       <div className="grid grid-cols-4 gap-4">
                         {form.images.map((img, index) => (
-                          <div key={index} className="relative group">
+                          <div key={index} className="relative group border rounded-lg overflow-hidden">
                             <img
                               src={img}
                               alt={`Property ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
+                              className="w-full h-32 object-cover"
                             />
+                            {/* Main badge on first image */}
+                            {index === 0 && (
+                              <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full shadow">
+                                Main
+                              </span>
+                            )}
+                            {/* Delete button */}
                             <button
                               onClick={() => removeImage(index)}
                               className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Delete"
                             >
                               <Trash2 size={16} />
                             </button>
+                            {/* Move Up button (hidden on first) */}
+                            {index > 0 && (
+                              <button
+                                onClick={() => moveImageUp(index)}
+                                className="absolute bottom-2 left-2 bg-gray-700 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Move Up"
+                              >
+                                <ChevronLeft size={16} />
+                              </button>
+                            )}
+                            {/* Move Down button (hidden on last) */}
+                            {index < form.images.length - 1 && (
+                              <button
+                                onClick={() => moveImageDown(index)}
+                                className="absolute bottom-2 right-2 bg-gray-700 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Move Down"
+                              >
+                                <ChevronRight size={16} />
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
