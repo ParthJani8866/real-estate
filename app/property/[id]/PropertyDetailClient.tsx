@@ -28,6 +28,8 @@ import {
   Mail,
   Star,
   Video,
+  User,
+  X,
 } from "lucide-react";
 import Header from "@/app/components/Header";
 
@@ -90,6 +92,7 @@ const getAmenityIcon = (amenity: string) => {
 export default function PropertyDetailClient({ property }: { property: Property }) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   const formatPrice = (price: number) => {
     if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`;
@@ -122,6 +125,11 @@ export default function PropertyDetailClient({ property }: { property: Property 
     property.description.length > 50
       ? property.description.slice(0, 50) + "..."
       : property.description;
+
+  const agent = {
+    name: "Parth Jani",
+    phone: "8866398281",
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -352,12 +360,57 @@ export default function PropertyDetailClient({ property }: { property: Property 
               <h3 className="text-lg font-semibold">Interested in this property?</h3>
               <p className="text-gray-500">Contact the agent for more details</p>
             </div>
-            <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center gap-2">
+            <button
+              onClick={() => setShowContactModal(true)}
+              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold flex items-center gap-2"
+            >
               <Phone size={18} /> Contact Agent
             </button>
           </div>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 relative animate-fade-in">
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+            <div className="flex flex-col items-center">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                <User size={40} className="text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-1">{agent.name}</h3>
+              <p className="text-gray-500 mb-6">Property Agent</p>
+              <div className="w-full bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <Phone size={20} className="text-blue-600" />
+                  <span className="text-lg font-semibold">{agent.phone}</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 text-center">
+                Call or WhatsApp for more details about this property.
+              </p>
+              <button
+                onClick={() => window.location.href = `tel:${agent.phone}`}
+                className="mt-6 w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 font-semibold flex items-center justify-center gap-2"
+              >
+                <Phone size={18} /> Call Now
+              </button>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="mt-3 w-full border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
