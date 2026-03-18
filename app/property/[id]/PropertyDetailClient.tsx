@@ -99,6 +99,7 @@ export default function PropertyDetailClient({ property }: { property: Property 
 
   const getLocationText = () => {
     const parts = [];
+    
     if (property.areaId && typeof property.areaId === "object") parts.push(property.areaId.name);
     if (property.cityId && typeof property.cityId === "object") parts.push(property.cityId.name);
     return parts.join(", ") || "Location not specified";
@@ -162,9 +163,6 @@ export default function PropertyDetailClient({ property }: { property: Property 
         {/* Title and Basic Info */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <h1 className="text-3xl font-bold text-gray-800">{property.title}</h1>
-          <p className="text-gray-500 flex items-center gap-1 mt-2">
-            <MapPin size={18} /> {getLocationText()}
-          </p>
           <div className="flex flex-wrap gap-4 mt-4">
             <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
               {getPurposeText()}
