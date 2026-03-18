@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Link from 'next/link'
-import { Building2, MapPin } from 'lucide-react';
+import { Building2, Filter, HomeIcon, MapPin, Star, Video } from 'lucide-react';
 
 interface Property {
   _id: string
@@ -38,6 +38,7 @@ export default function Home() {
   const [areas, setAreas] = useState<Area[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showFilters, setShowFilters] = useState(false);
 
   // Filter states
   const [selectedPurpose, setSelectedPurpose] = useState('')
@@ -172,64 +173,92 @@ export default function Home() {
       <main className="bg-zinc-50 dark:bg-black">
 
         {/* HERO SECTION */}
-        <section className="relative py-20 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <div className="max-w-6xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-              Find Your Dream Home in Ahmedabad
-            </h1>
-            <p className="mt-4 text-lg opacity-90">
-              Buy • Sell • Rent properties with video reels & best deals
-            </p>
+        <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 py-20 px-4 sm:px-6 lg:py-28">
+          {/* Background abstract shapes */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-blue-400/30 blur-3xl" />
+            <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-indigo-400/30 blur-3xl" />
+          </div>
 
-            <div className="mt-8 bg-white rounded-xl p-3 flex flex-col md:flex-row gap-3 shadow-lg">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by area, city, project..."
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="w-full px-4 py-3 rounded-lg text-black outline-none"
-                />
-                {showSuggestions && suggestions.length > 0 && (
-                  <ul className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {suggestions.map((item, idx) => (
-                      <li
-                        key={idx}
-                        onMouseDown={() => handleSuggestionClick(item)}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-gray-800 flex items-center gap-2"
-                      >
-
-                        <Building2 size={16} className="text-blue-500" />
-                       
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <button
-                onClick={handleSearch}
-                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-              >
-                Search
-              </button>
+          <div className="relative mx-auto max-w-7xl text-center">
+            {/* Badge */}
+            <div className="mb-6 inline-flex items-center rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-sm">
+              🏡 Trusted by 10,000+ families
             </div>
 
-            <div className="mt-6 flex justify-center gap-4">
-              <Link
-                href="/properties"
-                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold"
-              >
-                Browse Properties
-              </Link>
-              <Link
-                href="/post-property"
-                className="border border-white px-6 py-3 rounded-lg"
-              >
-                Post Property
-              </Link>
+            {/* Headline */}
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl">
+              Find Your Dream Home in
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-indigo-200">
+                Ahmedabad
+              </span>
+            </h1>
+
+            {/* Subheadline */}
+            <p className="mx-auto mt-6 max-w-2xl text-lg text-blue-100/80">
+              Buy • Sell • Rent properties with immersive video reels & exclusive deals.
+            </p>
+
+            {/* Search bar with glass effect */}
+            <div className="mx-auto mt-10 max-w-3xl transform transition-all duration-300 hover:scale-[1.02]">
+              <div className="rounded-2xl bg-white/10 p-2 backdrop-blur-xl backdrop-filter sm:p-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search by area, project, or landmark..."
+                      value={searchQuery}
+                      onChange={handleSearchChange}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                      className="w-full rounded-xl border-0 bg-white/90 px-5 py-4 text-gray-900 placeholder-gray-500 outline-none ring-1 ring-inset ring-gray-300/50 transition-all focus:ring-2 focus:ring-blue-400 sm:py-3.5"
+                    />
+                    {showSuggestions && suggestions.length > 0 && (
+                      <ul className="absolute left-0 right-0 z-10 mt-2 max-h-60 overflow-auto rounded-xl border border-gray-200 bg-white/90 p-1 shadow-2xl backdrop-blur-sm">
+                        {suggestions.map((item, idx) => (
+                          <li
+                            key={idx}
+                            onMouseDown={() => handleSuggestionClick(item)}
+                            className="flex cursor-pointer items-center gap-3 rounded-lg px-4 py-2.5 text-gray-700 transition-colors hover:bg-blue-50"
+                          >
+                            <Building2 size={18} className="text-blue-500" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleSearch}
+                    className="group relative inline-flex items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:shadow-blue-500/25 sm:px-10 sm:py-3.5"
+                  >
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity group-hover:opacity-100" />
+                    Search
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick stats */}
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-blue-100/80">
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-white/10 p-2">
+                  <HomeIcon size={16} className="text-blue-300" />
+                </div>
+                <span>500+ verified properties</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-white/10 p-2">
+                  <Video size={16} className="text-blue-300" />
+                </div>
+                <span>Video walkthroughs available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-white/10 p-2">
+                  <Star size={16} className="text-blue-300" />
+                </div>
+                <span>4.8 ★ customer rating</span>
+              </div>
             </div>
           </div>
         </section>
