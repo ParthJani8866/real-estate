@@ -237,28 +237,6 @@ export default function Home() {
                 </div>
               </div>
             </div>
-
-            {/* Quick stats */}
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-blue-100/80">
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-white/10 p-2">
-                  <HomeIcon size={16} className="text-blue-300" />
-                </div>
-                <span>500+ verified properties</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-white/10 p-2">
-                  <Video size={16} className="text-blue-300" />
-                </div>
-                <span>Video walkthroughs available</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-white/10 p-2">
-                  <Star size={16} className="text-blue-300" />
-                </div>
-                <span>4.8 ★ customer rating</span>
-              </div>
-            </div>
           </div>
         </section>
 
