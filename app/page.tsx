@@ -61,7 +61,7 @@ export default function Home() {
           fetch('/api/cities'),
           fetch('/api/areas')
         ])
-        if (!citiesRes.ok || !areasRes.ok) throw new Error('Failed to load filter data')
+        //if (!citiesRes.ok || !areasRes.ok) throw new Error('Failed to load filter data')
         const citiesData = await citiesRes.json()
         const areasData = await areasRes.json()
         setCities(citiesData)

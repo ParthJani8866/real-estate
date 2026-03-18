@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../lib/mongodb";
 import Property from "../../models/Property";
+import Area from "@/app/models/Area";
 
 export async function GET(request: Request) {
   try {
@@ -26,9 +27,24 @@ export async function GET(request: Request) {
       if (minPrice) filter.price.$gte = parseInt(minPrice);
       if (maxPrice) filter.price.$lte = parseInt(maxPrice);
     }
+
     if (search) {
-      // Simple case‑insensitive search on title (add more fields as needed)
-      filter.title = { $regex: search, $options: 'i' };
+      // 1. Find areas whose name matches the search term (case‑insensitive)
+      const matchedAreas = await Area.find({
+        name: { $regex: search, $options: 'i' }
+      }).select('_id').lean();
+
+      const areaIds = matchedAreas.map(a => a._id.toString());
+
+      // 2. Build an $or condition
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } }  // title search
+      ];
+
+      // If any area IDs were found, add them to the $or
+      if (areaIds.length > 0) {
+        filter.$or.push({ areaId: { $in: areaIds } });
+      }
     }
 
     const properties = await Property.find(filter)
