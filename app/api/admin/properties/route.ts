@@ -2,12 +2,60 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '../../../lib/mongodb'
 import Property from '../../../models/Property'
+import City from '../../../models/City'
+import Area from '../../../models/Area'
 import jwt from 'jsonwebtoken'
 import { Types } from 'mongoose'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
-// Helper function to convert MongoDB document to frontend-friendly object
+// Helper: slugify a string
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')           // spaces to -
+    .replace(/[^\w\-]+/g, '')       // remove non-word chars
+    .replace(/\-\-+/g, '-')         // collapse multiple -
+    .replace(/^-+/, '')              // trim - from start
+    .replace(/-+$/, '');             // trim - from end
+}
+
+// Helper: generate a unique slug (append number if duplicate)
+async function generateUniqueSlug(
+  baseSlug: string,
+  model: any,
+  currentId?: string
+): Promise<string> {
+  let slug = baseSlug;
+  let count = 1;
+  const query: any = { slug };
+  if (currentId) query._id = { $ne: new Types.ObjectId(currentId) };
+  while (await model.findOne(query)) {
+    slug = `${baseSlug}-${count}`;
+    query.slug = slug;
+    count++;
+  }
+  return slug;
+}
+
+// Helper: get city and area names from IDs (for slug)
+async function getLocationNames(cityId?: string, areaId?: string) {
+  let cityName = 'unknown';
+  let areaName = 'unknown';
+  if (cityId && Types.ObjectId.isValid(cityId)) {
+    const city = await City.findById(cityId).lean();
+    if (city) cityName = city.name;
+  }
+  if (areaId && Types.ObjectId.isValid(areaId)) {
+    const area = await Area.findById(areaId).lean();
+    if (area) areaName = area.name;
+  }
+  return { cityName, areaName };
+}
+
+// Helper to convert MongoDB document to frontend-friendly object
 function serializeProperty(doc: any) {
   if (!doc) return null
   
@@ -27,33 +75,29 @@ function serializeProperty(doc: any) {
   }
 }
 
+// ---------- GET ----------
 export async function GET(req: NextRequest) {
   try {
     await connectDB()
     
-    // Get token from header
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify token
     try {
       jwt.verify(token, JWT_SECRET)
     } catch (error) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
-    // Fetch properties with populated references
     const properties = await Property.find({})
       .populate('cityId', 'name')
       .populate('areaId', 'name')
       .sort({ createdAt: -1 })
       .lean()
 
-    // Serialize each property to convert ObjectIds to strings
-    const serializedProperties = properties.map((prop:any) => ({
+    const serializedProperties = properties.map((prop: any) => ({
       ...prop,
       _id: prop._id.toString(),
       cityId: prop.cityId ? {
@@ -76,18 +120,16 @@ export async function GET(req: NextRequest) {
   }
 }
 
+// ---------- POST ----------
 export async function POST(req: NextRequest) {
   try {
     await connectDB()
 
-    // Get token from header
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify token
     try {
       jwt.verify(token, JWT_SECRET)
     } catch (error) {
@@ -95,10 +137,17 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    
+
+    // --- Generate unique slug from city, area, title ---
+    const { cityName, areaName } = await getLocationNames(body.cityId, body.areaId);
+    const titleSlug = body.title ? slugify(body.title) : 'property';
+    const baseSlug = `${slugify(cityName)}-${slugify(areaName)}-${titleSlug}`;
+    const uniqueSlug = await generateUniqueSlug(baseSlug, Property);
+
     // Convert string IDs to ObjectIds
     const propertyData = {
       ...body,
+      slug: uniqueSlug,                     // add generated slug
       cityId: body.cityId ? new Types.ObjectId(body.cityId) : undefined,
       areaId: body.areaId ? new Types.ObjectId(body.areaId) : undefined,
       postedBy: body.postedBy ? {
@@ -107,7 +156,6 @@ export async function POST(req: NextRequest) {
       } : undefined
     }
 
-    // Create property
     const property = await Property.create(propertyData)
 
     return NextResponse.json({ 
@@ -123,18 +171,16 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ---------- PUT ----------
 export async function PUT(req: NextRequest) {
   try {
     await connectDB()
 
-    // Get token from header
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify token
     try {
       jwt.verify(token, JWT_SECRET)
     } catch (error) {
@@ -143,16 +189,33 @@ export async function PUT(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
-    
     if (!id) {
       return NextResponse.json({ error: 'Property ID required' }, { status: 400 })
     }
 
     const body = await req.json()
-    
+    const existingProperty = await Property.findById(id)
+    if (!existingProperty) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
+    }
+
+    // Determine if slug needs to be regenerated
+    const cityChanged = body.cityId && body.cityId !== existingProperty.cityId?.toString();
+    const areaChanged = body.areaId && body.areaId !== existingProperty.areaId?.toString();
+    const titleChanged = body.title && body.title !== existingProperty.title;
+
+    let newSlug = existingProperty.slug; // keep existing by default
+    if (cityChanged || areaChanged || titleChanged) {
+      const { cityName, areaName } = await getLocationNames(body.cityId, body.areaId);
+      const titleSlug = body.title ? slugify(body.title) : 'property';
+      const baseSlug = `${slugify(cityName)}-${slugify(areaName)}-${titleSlug}`;
+      newSlug = await generateUniqueSlug(baseSlug, Property, id);
+    }
+
     // Convert string IDs to ObjectIds
     const propertyData = {
       ...body,
+      slug: newSlug,
       cityId: body.cityId ? new Types.ObjectId(body.cityId) : undefined,
       areaId: body.areaId ? new Types.ObjectId(body.areaId) : undefined,
       postedBy: body.postedBy ? {
@@ -161,16 +224,11 @@ export async function PUT(req: NextRequest) {
       } : undefined
     }
 
-    // Update property
     const property = await Property.findByIdAndUpdate(
       new Types.ObjectId(id),
       propertyData,
       { new: true, runValidators: true }
     )
-
-    if (!property) {
-      return NextResponse.json({ error: 'Property not found' }, { status: 404 })
-    }
 
     return NextResponse.json({ 
       success: true, 
@@ -185,18 +243,16 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+// ---------- DELETE ----------
 export async function DELETE(req: NextRequest) {
   try {
     await connectDB()
 
-    // Get token from header
     const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify token
     try {
       jwt.verify(token, JWT_SECRET)
     } catch (error) {
@@ -205,12 +261,10 @@ export async function DELETE(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const id = searchParams.get('id')
-    
     if (!id) {
       return NextResponse.json({ error: 'Property ID required' }, { status: 400 })
     }
 
-    // Delete property
     const property = await Property.findByIdAndDelete(new Types.ObjectId(id))
 
     if (!property) {

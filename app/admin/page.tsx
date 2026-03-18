@@ -609,7 +609,7 @@ export default function AdminDashboard() {
       <div className="flex min-h-screen bg-gray-50">
         <div className="w-72 bg-white shadow-lg fixed h-full overflow-y-auto">
           <div className="p-6 border-b">
-            <h1 className="text-2xl font-bold text-blue-600">99acres</h1>
+            <h1 className="text-2xl font-bold text-blue-600">DreamHouse4Sale</h1>
             <p className="text-sm text-gray-500 mt-1">Admin Dashboard</p>
           </div>
         </div>
@@ -628,7 +628,7 @@ export default function AdminDashboard() {
       {/* Sidebar */}
       <div className="w-72 bg-white shadow-lg fixed h-full overflow-y-auto">
         <div className="p-6 border-b">
-          <h1 className="text-2xl font-bold text-blue-600">99acres</h1>
+          <h1 className="text-2xl font-bold text-blue-600">DreamHouse4Sale</h1>
           <p className="text-sm text-gray-500 mt-1">Admin Dashboard</p>
         </div>
 
