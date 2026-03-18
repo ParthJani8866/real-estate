@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import Link from 'next/link'
-import { Building2, Filter, HomeIcon, MapPin, Star, Video } from 'lucide-react';
+import { AlertCircle, ArrowRight, Bath, Bed, Building2, Check, Filter, HomeIcon, MapPin, Package, Square, Star, Video } from 'lucide-react';
 
 interface Property {
   _id: string
@@ -169,7 +169,6 @@ export default function Home() {
   return (
     <>
       <Header />
-
       <main className="bg-zinc-50 dark:bg-black">
 
         {/* HERO SECTION */}
@@ -390,13 +389,22 @@ export default function Home() {
 
         {/* PROPERTIES LIST */}
         <section className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-2xl font-bold mb-8 text-gray-800 dark:text-white">
-            {loading ? 'Loading...' : properties.length ? 'Properties' : 'No properties found'}
-          </h2>
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+              {loading ? 'Loading...' : properties.length ? 'Properties' : 'No properties found'}
+            </h2>
+            {/* Optional: "View All" link */}
+            {properties.length > 0 && (
+              <Link href="/properties" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                View All →
+              </Link>
+            )}
+          </div>
 
           {error && (
-            <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
-              {error}
+            <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6 flex items-center gap-2">
+              <AlertCircle size={18} />
+              <span>{error}</span>
             </div>
           )}
 
@@ -404,69 +412,126 @@ export default function Home() {
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
+          ) : properties.length === 0 ? (
+            <div className="text-center py-16 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl">
+              <HomeIcon size={48} className="mx-auto text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium text-gray-600 dark:text-gray-300">No properties match your criteria</h3>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">Try adjusting your filters or check back later.</p>
+            </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {properties.map((property) => {
-                const displayArea = getDisplayArea(property)
-                const locationText = getLocationText(property)
+                const displayArea = getDisplayArea(property);
+                const locationText = getLocationText(property);
+                const perSqftPrice = displayArea ? Math.round(property.price / displayArea) : null;
+
+                // Determine badge colors based on purpose
+                const purposeColors = {
+                  sell: 'bg-green-500',
+                  rent: 'bg-blue-500',
+                  pg: 'bg-purple-500',
+                }[property.purpose] || 'bg-gray-500';
+
+                const statusText = property.availabilityStatus === 'ready_to_move' ? 'Ready to Move' : 'Under Construction';
+                const statusColor = property.availabilityStatus === 'ready_to_move' ? 'bg-emerald-500' : 'bg-amber-500';
+
                 return (
                   <div
                     key={property._id}
-                    className="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow hover:shadow-xl transition"
+                    className="group bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-zinc-800"
                   >
-                    <div className="h-48 bg-gray-300 relative">
+                    {/* Image Container */}
+                    <div className="relative h-52 overflow-hidden">
                       {property.images && property.images.length > 0 ? (
                         <img
                           src={property.images[0]}
                           alt={property.title}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/placeholder-house.jpg'
+                            (e.target as HTMLImageElement).src = '/placeholder-house.jpg';
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-400 flex items-center justify-center text-white">
-                          No Image
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                          <HomeIcon size={40} />
                         </div>
                       )}
+
+                      {/* Badges */}
+                      <div className="absolute top-3 left-3 flex flex-col gap-2">
+                        {property.availabilityStatus && (
+                          <span className={`px-3 py-1 text-xs font-semibold text-white rounded-full shadow-lg ${statusColor}`}>
+                            {statusText}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Optional Verified Badge */}
+
+                      <div className="absolute top-3 right-3 bg-blue-600 text-white p-1.5 rounded-full shadow-lg">
+                        <Check size={14} />
+                      </div>
+
                     </div>
 
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold line-clamp-1">
-                        {property.title || `${property.bhk} BHK Property`}
-                      </h3>
-
-                      <p className="text-gray-500 text-sm mt-1">
-                        {formatPrice(property.price)} • {displayArea} sqft
-                      </p>
-
-                      <p className="text-gray-600 text-sm mt-1">
-                        {locationText}
-                      </p>
-
-                      <div className="flex justify-between items-center mt-4">
-                        <span className="text-sm text-gray-400">
-                          {property.availabilityStatus === 'ready_to_move' ? 'Ready to Move' : 'Under Construction'}
+                    {/* Content */}
+                    <div className="p-5">
+                      {/* Title & Price */}
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-white line-clamp-1 flex-1">
+                          {property.title || `${property.bhk} BHK`}
+                        </h3>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                            ₹{formatPrice(property.price)}
+                          </p>
+                          {perSqftPrice && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              ₹{perSqftPrice}/sq.ft
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      {/* Features Chips */}
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+                          <MapPin size={16} />
+                          {locationText}
                         </span>
+                        {property.bhk && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+                            <Bed size={16} />
+                            {property.bhk} BHK
+                          </span>
+                        )}
+
+                        {displayArea && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-zinc-800 rounded-full text-xs font-medium text-gray-700 dark:text-gray-300">
+                            <Square size={16} />
+                            {displayArea} sq.ft
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Footer */}
+                      <div className="flex justify-between items-center mt-5 pt-3 border-t border-gray-100 dark:border-zinc-800">
+
                         <Link
                           href={`/property/${property._id}`}
-                          className="text-blue-600 text-sm font-medium"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                         >
-                          View Details →
+                          View Details
+                          <ArrowRight size={16} />
                         </Link>
                       </div>
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </section>
-
-        {/* REELS and WHY US sections remain unchanged */}
-
       </main>
-
       <Footer />
     </>
   )
