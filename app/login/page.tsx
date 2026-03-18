@@ -13,7 +13,8 @@ export default function Login() {
     });
 
     const data = await res.json();
-
+    console.log(data);
+    
     if (data.token) {
       localStorage.setItem("token", data.token);
       window.location.href = "/";

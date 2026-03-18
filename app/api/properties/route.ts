@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   await connectDB();
 
   const body = await req.json();
-
+  console.log(body);
   // basic slug generator
   body.slug = body.title
     .toLowerCase()
@@ -47,6 +47,7 @@ export async function POST(req: Request) {
     .replace(/[^\w-]+/g, "");
 
   const property = await Property.create(body);
+  console.log(property);
 
   return NextResponse.json(property);
 }
