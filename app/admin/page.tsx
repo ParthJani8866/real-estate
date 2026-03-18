@@ -390,13 +390,35 @@ export default function AdminDashboard() {
     })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newImages = Array.from(e.target.files).map(file =>
-        URL.createObjectURL(file)
-      )
-      setUploadedImages(prev => [...prev, ...newImages])
-      setForm({ ...form, images: [...form.images, ...newImages] })
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+
+    setIsSubmitting(true); // disable buttons while uploading
+    setError(null);
+    try {
+      const formData = new FormData();
+      Array.from(e.target.files).forEach(file => {
+        formData.append("files", file);
+      });
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+      // data.urls is array of uploaded image URLs (e.g., "/uploads/abc123.jpg")
+      setUploadedImages(prev => [...prev, ...data.urls]);
+      setForm(prev => ({ ...prev, images: [...prev.images, ...data.urls] }));
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      setError("Failed to upload images. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      // Reset the input so same file can be uploaded again if needed
+      e.target.value = '';
     }
   }
 

@@ -1,53 +1,53 @@
 // app/api/properties/route.ts
-
 import { NextResponse } from "next/server";
 import { connectDB } from "../../lib/mongodb";
 import Property from "../../models/Property";
 
-export async function GET(req: Request) {
-  await connectDB();
+export async function GET(request: Request) {
+  try {
+    await connectDB();
+    
+    const { searchParams } = new URL(request.url);
+    const purpose = searchParams.get('purpose');
+    const city = searchParams.get('city');
+    const area = searchParams.get('area');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const bhk = searchParams.get('bhk');
 
-  const { searchParams } = new URL(req.url);
+    const filter: any = {};
+    if (purpose) filter.purpose = purpose;
+    if (city) filter.cityId = city;
+    if (area) filter.areaId = area;
+    if (bhk) filter.bhk = parseInt(bhk);
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = parseInt(minPrice);
+      if (maxPrice) filter.price.$lte = parseInt(maxPrice);
+    }
 
-  const city = searchParams.get("city");
-  const area = searchParams.get("area");
-  const minPrice = searchParams.get("minPrice");
-  const maxPrice = searchParams.get("maxPrice");
-  const bhk = searchParams.get("bhk");
+    const properties = await Property.find(filter)
+      .populate('cityId', 'name')
+      .populate('areaId', 'name')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
 
-  let filter: any = {};
+    const serialized = properties.map(p => ({
+      ...p,
+      _id: p._id.toString(),
+      cityId: p.cityId ? (typeof p.cityId === 'object' ? { _id: p.cityId._id.toString(), name: p.cityId.name } : p.cityId) : null,
+      areaId: p.areaId ? (typeof p.areaId === 'object' ? { _id: p.areaId._id.toString(), name: p.areaId.name } : p.areaId) : null,
+      price: p.price,
+      areaSqft: p.areaSqft || 0,
+      builtUpArea: p.builtUpArea || 0,
+      carpetArea: p.carpetArea || 0,
+      images: p.images || [],
+    }));
 
-  if (city) filter.cityId = city;
-  if (area) filter.areaId = area;
-  if (bhk) filter.bhk = Number(bhk);
-
-  if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = Number(minPrice);
-    if (maxPrice) filter.price.$lte = Number(maxPrice);
+    return NextResponse.json({ properties: serialized });
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+    return NextResponse.json({ error: 'Failed to fetch properties' }, { status: 500 });
   }
-
-  const properties = await Property.find(filter)
-    .populate("cityId")
-    .populate("areaId")
-    .sort({ createdAt: -1 });
-
-  return NextResponse.json(properties);
-}
-
-export async function POST(req: Request) {
-  await connectDB();
-
-  const body = await req.json();
-  console.log(body);
-  // basic slug generator
-  body.slug = body.title
-    .toLowerCase()
-    .replace(/ /g, "-")
-    .replace(/[^\w-]+/g, "");
-
-  const property = await Property.create(body);
-  console.log(property);
-
-  return NextResponse.json(property);
 }
