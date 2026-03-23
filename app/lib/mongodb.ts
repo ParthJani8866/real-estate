@@ -9,18 +9,36 @@ if (!MONGODB_URI) {
 }
 
 // Global cache (important for Next.js hot reload)
-let cached = (global as any).mongoose || { conn: null, promise: null };
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
+let cached: MongooseCache = (global as any).mongoose || { conn: null, promise: null };
 
 export async function connectDB() {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: "dreamhouse_db",
-    }).then((mongoose) => mongoose);
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        dbName: "dreamhouse_db",
+      })
+      .then((mongoose) => mongoose)
+      .catch((error) => {
+        // If the first connection attempt fails, don't leave a rejected promise cached forever.
+        cached.promise = null;
+        throw error;
+      });
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (error) {
+    cached.conn = null;
+    cached.promise = null;
+    throw error;
+  }
   (global as any).mongoose = cached;
 
   return cached.conn;

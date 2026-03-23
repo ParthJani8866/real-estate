@@ -76,9 +76,26 @@ export default function Home() {
 
   // Fetch properties based on filters and search
   useEffect(() => {
+    const controller = new AbortController()
+    let ignore = false
+
+    const delay = (ms: number) =>
+      new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, ms)
+        controller.signal.addEventListener(
+          'abort',
+          () => {
+            clearTimeout(timeoutId)
+            reject(new DOMException('Aborted', 'AbortError'))
+          },
+          { once: true }
+        )
+      })
+
     const fetchProperties = async () => {
       setLoading(true)
       setError(null)
+
       try {
         const params = new URLSearchParams()
         if (selectedPurpose) params.append('purpose', selectedPurpose)
@@ -89,22 +106,82 @@ export default function Home() {
         if (maxPrice) params.append('maxPrice', maxPrice)
         if (submittedSearch) params.append('search', submittedSearch)
 
-        const url = `/api/properties?${params.toString()}`
+        const query = params.toString()
+        const url = query ? `/api/properties?${query}` : '/api/properties'
 
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-        const data = await res.json()
+        const maxAttempts = 3
+        let lastError: unknown = null
 
-        setProperties(data.properties || [])
-      } catch (error) {
-        console.error('Error fetching properties:', error)
-        setError('Failed to load properties. Please try again.')
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+          try {
+            const res = await fetch(url, { signal: controller.signal })
+
+            if (!res.ok) {
+              let body: unknown = null
+              try {
+                body = await res.json()
+              } catch {
+                // ignore parse errors; we'll still throw below
+              }
+
+              // Retry transient server errors.
+              if (res.status >= 500 && res.status <= 599 && attempt < maxAttempts) {
+                await delay(300 * attempt)
+                continue
+              }
+
+              throw new Error(
+                `Failed to fetch properties (HTTP ${res.status})${body ? `: ${JSON.stringify(body)}` : ''}`
+              )
+            }
+
+            const data = await res.json()
+            if (!ignore) setProperties(data.properties || [])
+            return
+          } catch (error) {
+            if (controller.signal.aborted || (error instanceof DOMException && error.name === 'AbortError')) {
+              return
+            }
+
+            lastError = error
+            if (attempt < maxAttempts) {
+              await delay(300 * attempt)
+              continue
+            }
+          }
+        }
+
+        console.error('Error fetching properties:', lastError)
+        if (!ignore) {
+          const message = (() => {
+            const fallback = 'Failed to load properties. Please try again.'
+            if (!(lastError instanceof Error)) return fallback
+
+            const match = lastError.message.match(/HTTP\s+(\d{3})/)
+            const status = match ? Number(match[1]) : null
+
+            if (status && status >= 500) return 'Server is temporarily unavailable. Please try again.'
+            if (status && status >= 400) return 'Request failed. Please adjust filters and try again.'
+            if (lastError.message.includes('Failed to fetch')) {
+              return 'Network error. Please check your connection and try again.'
+            }
+
+            return fallback
+          })()
+
+          setError(message)
+        }
       } finally {
-        setLoading(false)
+        if (!ignore) setLoading(false)
       }
     }
 
     fetchProperties()
+
+    return () => {
+      ignore = true
+      controller.abort()
+    }
   }, [selectedPurpose, selectedCity, selectedArea, selectedBhk, minPrice, maxPrice, submittedSearch])
 
   // Build unique location names for autocomplete
