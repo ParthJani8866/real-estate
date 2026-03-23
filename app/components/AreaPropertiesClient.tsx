@@ -10,9 +10,8 @@ interface Property {
   bhk: number
   areaSqft: number
   images: string[]
-  slug: string
-  cityId: { _id: string; name: string; slug: string }
-  areaId: { _id: string; name: string; slug: string }
+  cityId: { _id: string; name: string; slug?: string } | string | null
+  areaId: { _id: string; name: string; slug?: string } | string | null
 }
 
 interface Area {
@@ -21,7 +20,7 @@ interface Area {
   slug: string
 }
 
-export default function AreaPropertiesClient({ area, properties }: { area: any; properties: any[] }) {
+export default function AreaPropertiesClient({ area, properties }: { area: Area; properties: Property[] }) {
   const formatPrice = (price: number) => {
     if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`
     if (price >= 100000) return `₹${(price / 100000).toFixed(2)} Lac`
@@ -51,10 +50,10 @@ export default function AreaPropertiesClient({ area, properties }: { area: any; 
                 <span className="flex items-center gap-1"><Maximize size={16} /> {property.areaSqft} sqft</span>
               </div>
               <p className="text-gray-500 text-sm mt-2 flex items-center gap-1">
-                <MapPin size={16} /> {property.areaId.name}
+                <MapPin size={16} /> {property.areaId && typeof property.areaId === 'object' ? property.areaId.name : ''}
               </p>
               <Link
-                href={`/projects-in-${property.cityId.slug}/${property.areaId.slug}/${property.slug}`}
+                href={`/property/id/${property._id}`}
                 className="mt-4 inline-block text-blue-600 hover:underline"
               >
                 View Details →

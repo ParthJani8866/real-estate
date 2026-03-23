@@ -572,7 +572,7 @@ export default function Home() {
                       <div className="flex justify-between items-center mt-5 pt-3 border-t border-gray-100 dark:border-zinc-800">
 
                         <Link
-                          href={`/property/${property._id}`}
+                          href={`/property/id/${property._id}`}
                           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                         >
                           View Details

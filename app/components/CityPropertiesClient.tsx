@@ -10,11 +10,16 @@ interface Property {
   bhk: number;
   areaSqft: number;
   images: string[];
-  slug?: string;
   areaId?: { name: string; slug: string };
 }
 
-export default function CityPropertiesClient({ city, properties }: { city: any; properties: Property[] }) {
+export default function CityPropertiesClient({
+  city,
+  properties,
+}: {
+  city: { name: string; slug?: string };
+  properties: Property[];
+}) {
   const formatPrice = (price: number) => {
     if (price >= 10000000) return `₹${(price / 10000000).toFixed(2)} Cr`;
     if (price >= 100000) return `₹${(price / 100000).toFixed(2)} Lac`;
@@ -49,7 +54,7 @@ export default function CityPropertiesClient({ city, properties }: { city: any; 
                 </p>
               )}
               <Link
-                href={`/${city.slug}/${property.areaId?.slug || 'area'}/${property.slug || property._id}`}
+                href={`/property/id/${property._id}`}
                 className="mt-4 inline-block text-blue-600 hover:underline"
               >
                 View Details →
